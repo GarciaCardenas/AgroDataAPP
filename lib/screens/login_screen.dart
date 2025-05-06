@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'database_helper.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController userController = TextEditingController();
@@ -7,38 +8,82 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(30.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.person, size: 100, color: Colors.green),
-              TextField(
-                controller: userController,
-                decoration: InputDecoration(labelText: 'Usuario'),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.green.shade700, Colors.green.shade300],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Card(
+              margin: EdgeInsets.symmetric(horizontal: 30),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-              TextField(
-                controller: passController,
-                decoration: InputDecoration(labelText: 'Contraseña'),
-                obscureText: true,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/home');
-                },
-                child: Text("Login"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding: EdgeInsets.symmetric(horizontal: 50),
+              elevation: 10,
+              child: Padding(
+                padding: const EdgeInsets.all(30.0),
+                child: Column(
+                  children: [
+                    Icon(Icons.agriculture, size: 80, color: Colors.green),
+                    SizedBox(height: 20),
+                    TextField(
+                      controller: userController,
+                      decoration: InputDecoration(
+                        labelText: 'Usuario',
+                        prefixIcon: Icon(Icons.person),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    TextField(
+                      controller: passController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña',
+                        prefixIcon: Icon(Icons.lock),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    SizedBox(height: 30),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final db = DatabaseHelper.instance;
+                        final user = await db.validarLogin(
+                          userController.text,
+                          passController.text,
+                        );
+                        if (user != null) {
+                          Navigator.pushReplacementNamed(context, '/home');
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Usuario o contraseña incorrectos")),
+                          );
+                        }
+                      },
+                      child: Text("Iniciar sesión"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {},
+                      child: Text("¿Olvidaste tu contraseña?"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/register');
+                      },
+                      child: Text("¿No tienes cuenta? Regístrate aquí"),
+                    ),
+                  ],
                 ),
               ),
-              TextButton(
-                onPressed: () {},
-                child: Text("¿Olvidaste tu contraseña?"),
-              ),
-            ],
+            ),
           ),
         ),
       ),
