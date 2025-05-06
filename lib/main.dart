@@ -7,6 +7,11 @@ import 'screens/opciones_screen.dart';
 import 'screens/camera_screen.dart';
 import 'screens/resultado_screen.dart';
 import 'screens/comunidad_screen.dart';
+import 'screens/perfil_screen.dart';
+import 'screens/ayuda_screen.dart';
+import 'screens/ajustes_screen.dart';
+import 'screens/nosotros_screen.dart';
+
 
 
 void main() {
@@ -26,19 +31,34 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       initialRoute: '/login',
+      // 👇 rutas que NO requieren argumentos
       routes: {
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
-        '/home': (context) =>  HomeScreen(),
-        '/cultivo': (context) =>  CultivoScreen(),
-        '/opciones': (context) =>  OpcionesScreen(),
-        '/camera': (context) => CameraScreen(),
-        '/resultado': (context) =>  ResultadoScreen(),
-        '/comunidad': (context) =>  ComunidadScreen(),
+        '/home': (context) => HomeScreen(),
+        '/cultivo': (context) => CultivoScreen(),
+        '/opciones': (context) => OpcionesScreen(),
+        '/resultado': (context) => ResultadoScreen(),
+        '/comunidad': (context) => ComunidadScreen(),
+        '/perfil': (context) => PerfilScreen(),
+        '/ayuda': (context) => AyudaScreen(),
+        '/ajustes': (context) => AjustesScreen(),
+        '/nosotros': (context) => NosotrosScreen(),
+      },
+      // 👇 rutas que requieren argumentos (por ejemplo, cropType en /camera)
+      onGenerateRoute: (settings) {
+        if (settings.name == '/camera') {
+          final cropType = settings.arguments as String; // 'naranja' o 'papa'
+          return MaterialPageRoute(
+            builder: (context) => CameraScreen(cropType: cropType),
+          );
+        }
+        return null;
       },
     );
   }
 }
+
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
