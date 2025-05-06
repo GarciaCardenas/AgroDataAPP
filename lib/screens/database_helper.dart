@@ -38,26 +38,51 @@ class DatabaseHelper {
 
   Future _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE $tableUsuarios (
-        $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
-        $columnNombre TEXT NOT NULL,
-        $columnEmail TEXT NOT NULL,
-        $columnUsuario TEXT NOT NULL,
-        $columnContrasena TEXT NOT NULL
-      )
-    ''');
+    CREATE TABLE $tableUsuarios (
+      $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+      $columnNombre TEXT NOT NULL,
+      $columnEmail TEXT NOT NULL,
+      $columnUsuario TEXT NOT NULL,
+      $columnContrasena TEXT NOT NULL
+    )
+  ''');
 
     await db.execute('''
-      CREATE TABLE $tablePosts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        contenido TEXT,
-        imagen TEXT,
-        fecha TEXT,
-        FOREIGN KEY (user_id) REFERENCES $tableUsuarios($columnId)
-      )
-    ''');
+    CREATE TABLE $tablePosts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      contenido TEXT,
+      imagen TEXT,
+      fecha TEXT,
+      FOREIGN KEY (user_id) REFERENCES $tableUsuarios($columnId)
+    )
+  ''');
+
+    // Tabla para los likes
+    await db.execute('''
+    CREATE TABLE likes (
+      post_id INTEGER,
+      user_id INTEGER,
+      FOREIGN KEY (post_id) REFERENCES $tablePosts(id),
+      FOREIGN KEY (user_id) REFERENCES $tableUsuarios(id),
+      PRIMARY KEY (post_id, user_id)
+    )
+  ''');
+
+    // Tabla para los comentarios
+    await db.execute('''
+    CREATE TABLE comentarios (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      post_id INTEGER,
+      user_id INTEGER,
+      comentario TEXT,
+      fecha TEXT,
+      FOREIGN KEY (post_id) REFERENCES $tablePosts(id),
+      FOREIGN KEY (user_id) REFERENCES $tableUsuarios(id)
+    )
+  ''');
   }
+
 
   // NUEVO: manejo de actualizaciones entre versiones
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -74,6 +99,49 @@ class DatabaseHelper {
       ''');
     }
   }
+
+  Future<void> agregarLike(int postId, int userId) async {
+    final db = await database;
+    await db.insert(
+      'likes',
+      {'post_id': postId, 'user_id': userId},
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+  }
+
+  /// Cuenta cuántos likes tiene un post
+  Future<int> obtenerLikes(int postId) async {
+    final db = await database;
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery(
+        'SELECT COUNT(*) FROM likes WHERE post_id = ?',
+        [postId],
+      ),
+    );
+    return count ?? 0;
+  }
+
+  Future<void> agregarComentario(int postId, int userId, String comentario) async {
+    final db = await database;
+    await db.insert(
+      'comentarios',
+      {
+        'post_id': postId,
+        'user_id': userId,
+        'comentario': comentario,
+        'fecha': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,  // Para evitar duplicados
+    );
+  }
+
+
+  Future<List<Map<String, dynamic>>> obtenerComentarios(int postId) async {
+    final db = await DatabaseHelper.instance.database;
+    return await db.query('comentarios',
+        where: 'post_id = ?', whereArgs: [postId], orderBy: 'fecha DESC');
+  }
+
 
   // ========== MÉTODOS PARA USUARIOS ==========
   Future<int> insertarUsuario(Map<String, dynamic> row) async {
