@@ -5,32 +5,44 @@ import 'package:http/http.dart' as http;
 
 class CameraScreen extends StatefulWidget {
   final String cropType;
-  const CameraScreen({super.key, required this.cropType});
+  final String mode; // "photo" o "video"
+
+  const CameraScreen({
+    super.key,
+    required this.cropType,
+    required this.mode,
+  });
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
 }
 
 class _CameraScreenState extends State<CameraScreen> {
-  File? _image;
+  File? _file;
   final picker = ImagePicker();
   String? _apiResponse;
   bool _isLoading = false;
 
-  Future<void> _getImage() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+  Future<void> _getFile() async {
+    XFile? pickedFile;
+
+    if (widget.mode == "photo") {
+      pickedFile = await picker.pickImage(source: ImageSource.camera);
+    } else if (widget.mode == "video") {
+      pickedFile = await picker.pickVideo(source: ImageSource.camera);
+    }
 
     if (pickedFile != null) {
       setState(() {
-        _image = File(pickedFile.path);
+        _file = File(pickedFile!.path);
         _isLoading = true;
       });
 
-      await _sendToAPI(_image!);
+      await _sendToAPI(_file!);
     }
   }
 
-  Future<void> _sendToAPI(File image) async {
+  Future<void> _sendToAPI(File file) async {
     final uri = Uri.parse(
       widget.cropType == "naranja"
           ? 'https://your-api.com/calcular-produccion'
@@ -38,10 +50,12 @@ class _CameraScreenState extends State<CameraScreen> {
     );
 
     final request = http.MultipartRequest('POST', uri)
-      ..files.add(await http.MultipartFile.fromPath('image', image.path));
+      ..files.add(await http.MultipartFile.fromPath(
+        widget.mode == "photo" ? 'image' : 'video',
+        file.path,
+      ));
 
     final response = await request.send();
-
     final responseBody = await response.stream.bytesToString();
 
     setState(() {
@@ -53,29 +67,34 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.cropType == "naranja" ? 'Calcular producción' : 'Detectar enfermedad')),
+      appBar: AppBar(
+        title: Text(widget.cropType == "naranja" ? 'Calcular producción' : 'Detectar enfermedad'),
+      ),
       body: Column(
         children: [
           Expanded(
             child: Center(
               child: _isLoading
                   ? const CircularProgressIndicator()
-                  : _image == null
-                  ? const Text("Aún no has tomado una foto")
+                  : _file == null
+                  ? Text("Aún no has tomado una ${widget.mode == "photo" ? 'foto' : 'video'}")
                   : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.file(_image!),
+                  widget.mode == "photo"
+                      ? Image.file(_file!)
+                      : const Icon(Icons.videocam, size: 100),
                   const SizedBox(height: 10),
                   Text(_apiResponse ?? ''),
                 ],
               ),
+
             ),
           ),
           ElevatedButton.icon(
-            onPressed: _getImage,
-            icon: const Icon(Icons.camera_alt),
-            label: const Text("Tomar Foto"),
+            onPressed: _getFile,
+            icon: Icon(widget.mode == "photo" ? Icons.camera_alt : Icons.videocam),
+            label: Text(widget.mode == "photo" ? "Tomar Foto" : "Grabar Video"),
           ),
         ],
       ),

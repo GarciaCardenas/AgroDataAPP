@@ -11,7 +11,7 @@ import 'screens/perfil_screen.dart';
 import 'screens/ayuda_screen.dart';
 import 'screens/ajustes_screen.dart';
 import 'screens/nosotros_screen.dart';
-
+import 'screens/new_posts_creen.dart';
 
 
 void main() {
@@ -44,17 +44,26 @@ class MyApp extends StatelessWidget {
         '/ayuda': (context) => AyudaScreen(),
         '/ajustes': (context) => AjustesScreen(),
         '/nosotros': (context) => NosotrosScreen(),
+        '/new_post': (context) => NewPostScreen(),
       },
       // 👇 rutas que requieren argumentos (por ejemplo, cropType en /camera)
       onGenerateRoute: (settings) {
         if (settings.name == '/camera') {
-          final cropType = settings.arguments as String; // 'naranja' o 'papa'
+          final args = settings.arguments as Map<String, String>;
+
+          final cropType = args['cropType']!;
+          final mode = args['mode']!;
+
           return MaterialPageRoute(
-            builder: (context) => CameraScreen(cropType: cropType),
+            builder: (context) => CameraScreen(
+              cropType: cropType,
+              mode: mode,
+            ),
           );
         }
         return null;
       },
+
     );
   }
 }

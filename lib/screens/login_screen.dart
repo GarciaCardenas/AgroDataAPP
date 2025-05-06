@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController userController = TextEditingController();
@@ -57,6 +59,12 @@ class LoginScreen extends StatelessWidget {
                           passController.text,
                         );
                         if (user != null) {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setInt('userId', user['id']);
+                          await prefs.setString('usuario', user['nombre']);
+                          await prefs.setString('email', user['email']);
+
+
                           Navigator.pushReplacementNamed(context, '/home');
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -64,6 +72,7 @@ class LoginScreen extends StatelessWidget {
                           );
                         }
                       },
+
                       child: Text("Iniciar sesión"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,

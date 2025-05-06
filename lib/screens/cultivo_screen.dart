@@ -29,7 +29,7 @@ class CultivoScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => CameraScreen(cropType: "naranja"),
+                            builder: (_) => CameraScreen(cropType: "naranja", mode: "video"), // producción
                           ),
                         );
                       },
@@ -38,6 +38,7 @@ class CultivoScreen extends StatelessWidget {
                         backgroundImage: AssetImage('assets/images/naranja.jpg'),
                       ),
                     ),
+
                     const SizedBox(height: 8),
                     const Text("Calcular producción"),
                   ],
@@ -49,7 +50,7 @@ class CultivoScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => CameraScreen(cropType: "papa"),
+                            builder: (_) => CameraScreen(cropType: "papa", mode: "photo"), // enfermedad
                           ),
                         );
                       },
@@ -58,6 +59,7 @@ class CultivoScreen extends StatelessWidget {
                         backgroundImage: AssetImage('assets/images/papa.jpg'),
                       ),
                     ),
+
                     const SizedBox(height: 8),
                     const Text("Detectar enfermedad"),
                   ],

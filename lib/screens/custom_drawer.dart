@@ -1,9 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class CustomDrawer extends StatelessWidget {
-  final BuildContext context;
+class CustomDrawer extends StatefulWidget {
+  final BuildContext drawerContext;
 
-  CustomDrawer(this.context);
+  CustomDrawer(this.drawerContext);
+
+  @override
+  _CustomDrawerState createState() => _CustomDrawerState();
+}
+
+class _CustomDrawerState extends State<CustomDrawer> {
+  String nombreUsuario = '';
+
+  @override
+  void initState() {
+    super.initState();
+    cargarUsuario();
+  }
+
+  Future<void> cargarUsuario() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      nombreUsuario = prefs.getString('usuario') ?? 'Invitado';
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +40,7 @@ class CustomDrawer extends StatelessWidget {
               children: [
                 Icon(Icons.person, size: 60, color: Colors.white),
                 SizedBox(height: 10),
-                Text('Nombre de Usuario', style: TextStyle(color: Colors.white, fontSize: 18)),
+                Text(nombreUsuario, style: TextStyle(color: Colors.white, fontSize: 18)),
               ],
             ),
           ),
