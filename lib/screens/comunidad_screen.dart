@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'database_helper.dart';
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
+import 'video_player_widget.dart'; // Asegúrate de que la ruta sea correcta
+
 
 class ComunidadScreen extends StatefulWidget {
   @override
@@ -160,7 +162,11 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
                                       );
                                     },
                                     child: post['imagen'].endsWith(".mp4")
-                                        ? Icon(Icons.videocam, size: 100)
+                                        ? SizedBox(
+                                      height: 200, // Ajusta la altura según necesites
+                                      width: double.infinity,
+                                      child: VideoPlayerWidget(videoFile: File(post['imagen'])),
+                                    )
                                         : Image.file(File(post['imagen']), height: 200),
                                   ),
                                 SizedBox(height: 10),
@@ -260,7 +266,7 @@ class FullScreenMediaView extends StatelessWidget {
       ),
       body: Center(
         child: path.endsWith(".mp4")
-            ? Text("Reproductor de video no implementado. Usa video_player.") // o usa video_player aquí
+            ? VideoPlayerWidget(videoFile: File(path))
             : Image.file(File(path)),
       ),
     );

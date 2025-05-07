@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'database_helper.dart';
+import 'video_player_widget.dart';
+import 'package:video_player/video_player.dart';
 
 class NewPostScreen extends StatefulWidget {
   @override
@@ -15,13 +17,20 @@ class _NewPostScreenState extends State<NewPostScreen> {
   final ImagePicker _picker = ImagePicker();
 
   Future<void> pickMedia({required bool isVideo}) async {
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-    );
+    XFile? pickedFile;
+    if (isVideo) {
+      pickedFile = await _picker.pickVideo(
+        source: ImageSource.gallery,
+      );
+    } else {
+      pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+      );
+    }
 
     if (pickedFile != null) {
       setState(() {
-        mediaFile = File(pickedFile.path);
+        mediaFile = pickedFile?.path != null ? File(pickedFile!.path) : null;
       });
     }
   }
@@ -75,7 +84,11 @@ class _NewPostScreenState extends State<NewPostScreen> {
                 Column(
                   children: [
                     mediaFile!.path.endsWith(".mp4")
-                        ? Icon(Icons.videocam, size: 100)
+                        ? SizedBox(
+                      height: 200, // Ajusta la altura según necesites
+                      width: double.infinity,
+                      child: VideoPlayerWidget(videoFile: mediaFile!),
+                    )
                         : Image.file(mediaFile!, height: 200),
                     Text(mediaFile!.path.split('/').last),
                   ],
