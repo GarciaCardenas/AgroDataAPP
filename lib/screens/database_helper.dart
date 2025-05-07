@@ -20,6 +20,12 @@ class DatabaseHelper {
 
   static Database? _database;
 
+  static Future<void> deleteAppDatabase() async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, "AppDatabase.db");
+    await deleteDatabase(path);
+  }
+
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDatabase();
@@ -35,6 +41,10 @@ class DatabaseHelper {
       onUpgrade: _onUpgrade, // <- AÑADIDO
     );
   }
+
+
+
+
 
   Future _onCreate(Database db, int version) async {
     await db.execute('''
@@ -88,38 +98,74 @@ class DatabaseHelper {
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await db.execute('''
-        CREATE TABLE IF NOT EXISTS $tablePosts (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER,
-          contenido TEXT,
-          imagen TEXT,
-          fecha TEXT,
-          FOREIGN KEY (user_id) REFERENCES $tableUsuarios($columnId)
-        )
-      ''');
+      CREATE TABLE IF NOT EXISTS $tablePosts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        contenido TEXT,
+        imagen TEXT,
+        fecha TEXT,
+        FOREIGN KEY (user_id) REFERENCES $tableUsuarios($columnId)
+      )
+    ''');
+
+      await db.execute('''
+      CREATE TABLE IF NOT EXISTS likes (
+        post_id INTEGER,
+        user_id INTEGER,
+        FOREIGN KEY (post_id) REFERENCES $tablePosts(id),
+        FOREIGN KEY (user_id) REFERENCES $tableUsuarios(id),
+        PRIMARY KEY (post_id, user_id)
+      )
+    ''');
+
+      await db.execute('''
+      CREATE TABLE IF NOT EXISTS comentarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_id INTEGER,
+        user_id INTEGER,
+        comentario TEXT,
+        fecha TEXT,
+        FOREIGN KEY (post_id) REFERENCES $tablePosts(id),
+        FOREIGN KEY (user_id) REFERENCES $tableUsuarios(id)
+      )
+    ''');
     }
   }
 
-  Future<void> agregarLike(int postId, int userId) async {
-    final db = await database;
-    await db.insert(
-      'likes',
-      {'post_id': postId, 'user_id': userId},
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
-  }
-
-  /// Cuenta cuántos likes tiene un post
+  // contar likes
   Future<int> obtenerLikes(int postId) async {
     final db = await database;
-    final count = Sqflite.firstIntValue(
-      await db.rawQuery(
-        'SELECT COUNT(*) FROM likes WHERE post_id = ?',
-        [postId],
-      ),
+    final res = await db.rawQuery(
+        'SELECT COUNT(*) AS count FROM likes WHERE post_id = ?',
+        [postId]
     );
-    return count ?? 0;
+    return Sqflite.firstIntValue(res) ?? 0;
   }
+
+// insertar like
+  Future<void> agregarLike(int postId, int userId) async {
+    final db = await database;
+    await db.insert('likes', {
+      'post_id': postId,
+      'user_id': userId,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
+  }
+
+// obtener comentarios
+  Future<List<Map<String, dynamic>>> obtenerComentarios(int postId) async {
+    final db = await database;
+    return await db.rawQuery('''
+    SELECT c.comentario, c.fecha, u.nombre 
+    FROM comentarios c
+    JOIN usuarios u ON c.user_id = u.id
+    WHERE c.post_id = ?
+    ORDER BY c.fecha ASC
+  ''', [postId]);
+  }
+
+
+
+
 
   Future<void> agregarComentario(int postId, int userId, String comentario) async {
     final db = await database;
@@ -134,14 +180,6 @@ class DatabaseHelper {
       conflictAlgorithm: ConflictAlgorithm.replace,  // Para evitar duplicados
     );
   }
-
-
-  Future<List<Map<String, dynamic>>> obtenerComentarios(int postId) async {
-    final db = await DatabaseHelper.instance.database;
-    return await db.query('comentarios',
-        where: 'post_id = ?', whereArgs: [postId], orderBy: 'fecha DESC');
-  }
-
 
   // ========== MÉTODOS PARA USUARIOS ==========
   Future<int> insertarUsuario(Map<String, dynamic> row) async {
