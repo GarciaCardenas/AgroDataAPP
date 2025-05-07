@@ -11,11 +11,16 @@ class ComunidadScreen extends StatefulWidget {
 
 class _ComunidadScreenState extends State<ComunidadScreen> {
   List<Map<String, dynamic>> posts = [];
+  Map<int, bool> _showAllComments = {}; // Mapa para rastrear la visibilidad de los comentarios por postId
 
   Future<void> cargarPosts() async {
     final datos = await DatabaseHelper.instance.obtenerPosts();
     setState(() {
       posts = datos;
+      // Inicializar el estado de visibilidad para cada post
+      for (var post in posts) {
+        _showAllComments[post['id']] = false;
+      }
     });
   }
 
@@ -44,6 +49,12 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
     }
   }
 
+  void _toggleCommentsVisibility(int postId) {
+    setState(() {
+      _showAllComments[postId] = !_showAllComments[postId]!;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -61,6 +72,7 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
           itemBuilder: (context, index) {
             final post = posts[index];
             final comentarioController = TextEditingController();
+            final showAll = _showAllComments[post['id']] ?? false;
 
             return FutureBuilder<String>(
               future: obtenerNombreUsuario(post['user_id']),
@@ -71,6 +83,55 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
                   future: DatabaseHelper.instance.obtenerComentarios(post['id']),
                   builder: (context, comentarioSnapshot) {
                     final comentarios = comentarioSnapshot.data ?? [];
+                    List<Widget> displayedComments = [];
+
+                    if (comentarios.isNotEmpty) {
+                      if (!showAll && comentarios.length > 1) {
+                        final primerComentario = comentarios.first;
+                        final nombre = primerComentario['nombre'] ?? "Anónimo";
+                        final fecha = primerComentario['fecha'] != null
+                            ? DateTime.parse(primerComentario['fecha']).toLocal().toString().split('.')[0]
+                            : "";
+                        final texto = primerComentario['comentario'] ?? "";
+                        displayedComments.add(
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "$nombre - $fecha",
+                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                                Text(texto),
+                              ],
+                            ),
+                          ),
+                        );
+                      } else {
+                        displayedComments = comentarios.map((comentario) {
+                          final nombre = comentario['nombre'] ?? "Anónimo";
+                          final fecha = comentario['fecha'] != null
+                              ? DateTime.parse(comentario['fecha']).toLocal().toString().split('.')[0]
+                              : "";
+                          final texto = comentario['comentario'] ?? "";
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "$nombre - $fecha",
+                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                                Text(texto),
+                              ],
+                            ),
+                          );
+                        }).toList();
+                      }
+                    }
 
                     return Center(
                       child: ConstrainedBox(
@@ -126,28 +187,12 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
                                   ],
                                 ),
                                 Text("Comentarios:", style: TextStyle(fontWeight: FontWeight.bold)),
-                                ...comentarios.map((comentario) {
-                                  final nombre = comentario['nombre'] ?? "Anónimo";
-                                  final fecha = comentario['fecha'] != null
-                                      ? DateTime.parse(comentario['fecha']).toLocal().toString().split('.')[0]
-                                      : "";
-                                  final texto = comentario['comentario'] ?? "";
-
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "$nombre - $fecha",
-                                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                                        ),
-                                        Text(texto),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-
+                                ...displayedComments,
+                                if (comentarios.length > 1)
+                                  TextButton(
+                                    onPressed: () => _toggleCommentsVisibility(post['id']),
+                                    child: Text(showAll ? "Ver menos" : "Ver más (${comentarios.length - 1} más)"),
+                                  ),
                                 SizedBox(height: 8),
                                 TextField(
                                   controller: comentarioController,
@@ -162,7 +207,10 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
                                         if (userId != null && text.isNotEmpty) {
                                           await agregarComentario(post['id'], userId, text);
                                           comentarioController.clear();
-
+                                          // Después de agregar un comentario, por lo general querrás mostrar todos los comentarios
+                                          setState(() {
+                                            _showAllComments[post['id']] = true;
+                                          });
                                           await cargarPosts();
                                         }
                                       },
@@ -218,4 +266,3 @@ class FullScreenMediaView extends StatelessWidget {
     );
   }
 }
-
