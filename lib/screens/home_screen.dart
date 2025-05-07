@@ -13,20 +13,21 @@ class HomeScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Imagen con altura limitada y adaptada
-            Container(
-              height: MediaQuery.of(context).size.height * 0.5, // 50% del alto de pantalla
-              width: double.infinity,
-              child: Image.asset(
-                'assets/images/farmer.jpg',
-                fit: BoxFit.cover,
-              ),
-            ),
-            SizedBox(height: 20),
             Text(
               "Bienvenido",
               style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
             ),
+            // Imagen con altura limitada y adaptada
+            Container(
+              height: MediaQuery.of(context).size.height * 0.7, // 50% del alto de pantalla
+              width: double.infinity,
+              child: Image.asset(
+                'assets/images/inicio.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+            SizedBox(height: 20),
+
             SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,

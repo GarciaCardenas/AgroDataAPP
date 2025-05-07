@@ -85,11 +85,11 @@ class _NewPostScreenState extends State<NewPostScreen> {
                   children: [
                     mediaFile!.path.endsWith(".mp4")
                         ? SizedBox(
-                      height: 200, // Ajusta la altura según necesites
+                      height: 500, // Ajusta la altura según necesites
                       width: double.infinity,
                       child: VideoPlayerWidget(videoFile: mediaFile!),
                     )
-                        : Image.file(mediaFile!, height: 200),
+                        : Image.file(mediaFile!, height: 500),
                     Text(mediaFile!.path.split('/').last),
                   ],
                 ),

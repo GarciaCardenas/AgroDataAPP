@@ -163,11 +163,10 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
                                     },
                                     child: post['imagen'].endsWith(".mp4")
                                         ? SizedBox(
-                                      height: 200, // Ajusta la altura según necesites
                                       width: double.infinity,
                                       child: VideoPlayerWidget(videoFile: File(post['imagen'])),
                                     )
-                                        : Image.file(File(post['imagen']), height: 200),
+                                        : Image.file(File(post['imagen']), height: 350),
                                   ),
                                 SizedBox(height: 10),
                                 Row(

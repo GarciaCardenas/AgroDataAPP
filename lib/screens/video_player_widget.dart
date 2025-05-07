@@ -14,21 +14,25 @@ class VideoPlayerWidget extends StatefulWidget {
 class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   late VideoPlayerController _controller;
   late Future<void> _initializeVideoPlayerFuture;
+  bool _isPlaying = true; // Variable para rastrear el estado de reproducción
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.file(widget.videoFile);
-    _initializeVideoPlayerFuture = _controller.initialize().then((_) {
-      // Asegúrate de que la primera frame esté disponible y luego intenta reproducir
-      setState(() {});
-      _controller.play().catchError((error) {
-        print("Error playing video: $error");
-        // Puedes mostrar un mensaje al usuario si la reproducción automática falla
+    _controller = VideoPlayerController.file(widget.videoFile)
+      ..addListener(() {
+        // Escucha los cambios en el estado de reproducción para actualizar _isPlaying
+        if (_controller.value.isPlaying != _isPlaying) {
+          setState(() {
+            _isPlaying = _controller.value.isPlaying;
+          });
+        }
       });
+
+    _initializeVideoPlayerFuture = _controller.initialize().then((_) {
+      setState(() {});
     }).catchError((error) {
       print("Error initializing video player: $error");
-      // Aquí podrías actualizar el estado del widget para mostrar un mensaje de error más específico
     });
   }
 
@@ -38,6 +42,16 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     _controller.dispose();
   }
 
+  void _togglePlayPause() {
+    setState(() {
+      if (_controller.value.isPlaying) {
+        _controller.pause();
+      } else {
+        _controller.play();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
@@ -45,9 +59,22 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (_controller.value.isInitialized) {
-            return AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: VideoPlayer(_controller),
+            return Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                SizedBox( // Envuelve el AspectRatio en un SizedBox
+                  height: 500, // Establece la altura deseada
+                  width: double.infinity, // Ocupa todo el ancho disponible
+                  child: AspectRatio(
+                    aspectRatio: _controller.value.aspectRatio,
+                    child: VideoPlayer(_controller),
+                  ),
+                ),
+                _ControlsOverlay(
+                  isPlaying: _isPlaying,
+                  onPlayPause: _togglePlayPause,
+                ),
+              ],
             );
           } else {
             return Center(child: Text('Error: No se pudo inicializar el reproductor.'));
@@ -59,6 +86,38 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           return Center(child: CircularProgressIndicator());
         }
       },
+    );
+  }
+}
+
+class _ControlsOverlay extends StatelessWidget {
+  const _ControlsOverlay({
+    required this.isPlaying,
+    required this.onPlayPause,
+  });
+
+  final bool isPlaying;
+  final VoidCallback onPlayPause;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      reverseDuration: const Duration(milliseconds: 400),
+      child: Container(
+        color: Colors.black26,
+        child: Center(
+          child: IconButton(
+            key: ValueKey(isPlaying),
+            icon: Icon(
+              isPlaying ? Icons.pause : Icons.play_arrow,
+              color: Colors.white,
+              size: 50.0,
+            ),
+            onPressed: onPlayPause,
+          ),
+        ),
+      ),
     );
   }
 }
