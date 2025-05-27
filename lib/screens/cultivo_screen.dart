@@ -67,14 +67,23 @@ class CultivoScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 40),
-            const Text("¿No encuentras tu cultivo?", style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              "¿No encuentras tu cultivo?",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
-            Column(
-              children: const [
-                Icon(Icons.people, size: 40),
-                Text("Pregúntale a la comunidad"),
-              ],
-            )
+
+            InkWell(
+              onTap: () {
+                Navigator.pushNamed(context, '/comunidad');
+              },
+              child: Column(
+                children: const [
+                  Icon(Icons.people, size: 40),
+                  Text("Pregúntale a la comunidad"),
+                ],
+              ),
+            ),
           ],
         ),
       ),
