@@ -4,7 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'database_helper.dart';
 import 'video_player_widget.dart';
-import 'package:video_player/video_player.dart';
 
 class NewPostScreen extends StatefulWidget {
   @override
@@ -13,24 +12,35 @@ class NewPostScreen extends StatefulWidget {
 
 class _NewPostScreenState extends State<NewPostScreen> {
   final TextEditingController contentController = TextEditingController();
+  final TextEditingController categoryController = TextEditingController();
   File? mediaFile;
   final ImagePicker _picker = ImagePicker();
+  List<String> categorias = [];
+
+  @override
+  void initState() {
+    super.initState();
+    cargarCategorias();
+  }
+
+  Future<void> cargarCategorias() async {
+    final data = await DatabaseHelper.instance.obtenerCategorias();
+    setState(() {
+      categorias = data.map((e) => e['nombre'].toString()).toList();
+    });
+  }
 
   Future<void> pickMedia({required bool isVideo}) async {
     XFile? pickedFile;
     if (isVideo) {
-      pickedFile = await _picker.pickVideo(
-        source: ImageSource.gallery,
-      );
+      pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
     } else {
-      pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
-      );
+      pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     }
 
     if (pickedFile != null) {
       setState(() {
-        mediaFile = pickedFile?.path != null ? File(pickedFile!.path) : null;
+        mediaFile = File(pickedFile!.path);
       });
     }
   }
@@ -39,28 +49,41 @@ class _NewPostScreenState extends State<NewPostScreen> {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('userId');
 
-    if (userId != null && contentController.text.isNotEmpty) {
-      final nuevoPost = {
-        'user_id': userId,
-        'contenido': contentController.text,
-        'imagen': mediaFile?.path ?? '',
-        'fecha': DateTime.now().toIso8601String(),
-      };
-
-      await DatabaseHelper.instance.insertarPost(nuevoPost);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("¡Publicación guardada!")),
-      );
-
-      Navigator.pop(context);
-    } else {
+    if (userId == null || contentController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Escribe algo para publicar.")),
       );
+      return;
     }
-  }
 
+    // Verificar si la categoría existe
+    String nombreCategoria = categoryController.text.trim();
+    if (nombreCategoria.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Por favor, escribe o selecciona una categoría.")),
+      );
+      return;
+    }
+
+    // Insertar si no existe
+    int categoriaId = await DatabaseHelper.instance.insertarCategoria(nombreCategoria);
+
+    final nuevoPost = {
+      'user_id': userId,
+      'contenido': contentController.text,
+      'imagen': mediaFile?.path ?? '',
+      'fecha': DateTime.now().toIso8601String(),
+      'categoria_id': categoriaId,
+    };
+
+    await DatabaseHelper.instance.insertarPost(nuevoPost);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("¡Publicación guardada!")),
+    );
+
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,12 +103,38 @@ class _NewPostScreenState extends State<NewPostScreen> {
                 ),
               ),
               SizedBox(height: 20),
+
+              /// CAMPO DE CATEGORÍA CON AUTOCOMPLETE
+              Autocomplete<String>(
+                optionsBuilder: (TextEditingValue textEditingValue) {
+                  if (textEditingValue.text == '') return const Iterable<String>.empty();
+                  return categorias.where((String option) =>
+                      option.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                },
+                fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                  categoryController.text = controller.text;
+                  return TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    onChanged: (value) => categoryController.text = value,
+                    decoration: InputDecoration(
+                      hintText: 'Categoría',
+                      border: OutlineInputBorder(),
+                    ),
+                  );
+                },
+                onSelected: (String selection) {
+                  categoryController.text = selection;
+                },
+              ),
+              SizedBox(height: 20),
+
               if (mediaFile != null)
                 Column(
                   children: [
                     mediaFile!.path.endsWith(".mp4")
                         ? SizedBox(
-                      height: 500, // Ajusta la altura según necesites
+                      height: 500,
                       width: double.infinity,
                       child: VideoPlayerWidget(videoFile: mediaFile!),
                     )
@@ -94,6 +143,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
                   ],
                 ),
               SizedBox(height: 10),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [

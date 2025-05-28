@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static final _databaseName = "AppDatabase.db";
-  static final _databaseVersion = 2; // AUMENTADO A 2
+  static final _databaseVersion = 3; // AUMENTADO A 2
 
   static final tableUsuarios = 'usuarios';
   static final tablePosts = 'posts';
@@ -44,29 +44,33 @@ class DatabaseHelper {
 
 
 
-
-
   Future _onCreate(Database db, int version) async {
     await db.execute('''
     CREATE TABLE $tableUsuarios (
-      $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
-      $columnNombre TEXT NOT NULL,
-      $columnEmail TEXT NOT NULL,
-      $columnUsuario TEXT NOT NULL,
-      $columnContrasena TEXT NOT NULL
-    )
+    $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+    $columnNombre TEXT NOT NULL,
+    $columnEmail TEXT NOT NULL,
+    $columnUsuario TEXT NOT NULL,
+    $columnContrasena TEXT NOT NULL,
+    foto TEXT  -- Nueva columna
+  )
   ''');
 
     await db.execute('''
-    CREATE TABLE $tablePosts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER,
-      contenido TEXT,
-      imagen TEXT,
-      fecha TEXT,
-      FOREIGN KEY (user_id) REFERENCES $tableUsuarios($columnId)
-    )
-  ''');
+CREATE TABLE $tablePosts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  contenido TEXT,
+  imagen TEXT,
+  fecha TEXT,
+  categoria_id INTEGER,
+  FOREIGN KEY (user_id) REFERENCES $tableUsuarios($columnId),
+  FOREIGN KEY (categoria_id) REFERENCES categorias(id)
+)
+''');
+
+
+
 
     // Tabla para los likes
     await db.execute('''
@@ -78,6 +82,15 @@ class DatabaseHelper {
       PRIMARY KEY (post_id, user_id)
     )
   ''');
+
+
+    await db.execute('''
+      CREATE TABLE categorias (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT UNIQUE
+      )
+      ''');
+
 
     // Tabla para los comentarios
     await db.execute('''
@@ -94,9 +107,16 @@ class DatabaseHelper {
   }
 
 
-  // NUEVO: manejo de actualizaciones entre versiones
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
+    if (oldVersion < 3) {
+      // Verificar si la columna 'foto' ya existe
+      final columns = await db.rawQuery("PRAGMA table_info($tableUsuarios)");
+      final existeFoto = columns.any((column) => column['name'] == 'foto');
+
+      if (!existeFoto) {
+        await db.execute("ALTER TABLE $tableUsuarios ADD COLUMN foto TEXT");
+      }
+
       await db.execute('''
       CREATE TABLE IF NOT EXISTS $tablePosts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,6 +128,22 @@ class DatabaseHelper {
       )
     ''');
 
+
+  await db.execute('''
+    CREATE TABLE IF NOT EXISTS categorias (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT UNIQUE
+  )
+  ''');
+      // Verificar si columna categoria_id ya existe en posts
+      final postColumns = await db.rawQuery("PRAGMA table_info($tablePosts)");
+      final existeCategoriaId = postColumns.any((column) => column['name'] == 'categoria_id');
+
+      if (!existeCategoriaId) {
+        await db.execute('ALTER TABLE $tablePosts ADD COLUMN categoria_id INTEGER');
+      }
+
+
       await db.execute('''
       CREATE TABLE IF NOT EXISTS likes (
         post_id INTEGER,
@@ -117,6 +153,7 @@ class DatabaseHelper {
         PRIMARY KEY (post_id, user_id)
       )
     ''');
+
 
       await db.execute('''
       CREATE TABLE IF NOT EXISTS comentarios (
@@ -163,8 +200,34 @@ class DatabaseHelper {
   ''', [postId]);
   }
 
+  Future<int> insertarCategoria(String nombre) async {
+    final db = await database;
+
+    // Verifica si ya existe
+    final resultado = await db.query(
+      'categorias',
+      where: 'nombre = ?',
+      whereArgs: [nombre],
+    );
+
+    if (resultado.isNotEmpty) {
+      return resultado.first['id'] as int;
+    }
+
+    return await db.insert('categorias', {'nombre': nombre});
+  }
 
 
+  Future<List<Map<String, dynamic>>> obtenerCategorias() async {
+    final db = await database;
+    return await db.query('categorias');
+  }
+
+
+  Future<int> insertarPostConCategoria(Map<String, dynamic> post) async {
+    final db = await database;
+    return await db.insert(tablePosts, post);
+  }
 
 
   Future<void> agregarComentario(int postId, int userId, String comentario) async {
@@ -217,10 +280,33 @@ class DatabaseHelper {
     return await db.insert(tablePosts, post);
   }
 
-  Future<List<Map<String, dynamic>>> obtenerPosts() async {
-    Database db = await instance.database;
-    return await db.query(tablePosts, orderBy: 'id DESC');
+  Future<List<Map<String, dynamic>>> obtenerPosts({
+    String? categoria,
+    String? textoBusqueda,
+  }) async {
+    final db = await database;
+    String where = '';
+    List<dynamic> args = [];
+
+    if (categoria != null) {
+      where += 'categoria_id IN (SELECT id FROM categorias WHERE nombre = ?)';
+      args.add(categoria);
+    }
+
+    if (textoBusqueda != null && textoBusqueda.isNotEmpty) {
+      if (where.isNotEmpty) where += ' AND ';
+      where += 'contenido LIKE ?';
+      args.add('%$textoBusqueda%');
+    }
+
+    return await db.query(
+      tablePosts,
+      where: where.isEmpty ? null : where,
+      whereArgs: args.isEmpty ? null : args,
+      orderBy: 'id DESC',
+    );
   }
+
 
   Future<List<Map<String, dynamic>>> obtenerPostsPorUsuario(int userId) async {
     Database db = await instance.database;
