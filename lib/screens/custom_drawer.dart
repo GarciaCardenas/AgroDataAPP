@@ -26,7 +26,6 @@ class _CustomDrawerState extends State<CustomDrawer> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -44,6 +43,16 @@ class _CustomDrawerState extends State<CustomDrawer> {
               ],
             ),
           ),
+
+          // 🔹 NUEVO ITEM: INICIO
+          ListTile(
+            leading: Icon(Icons.home),
+            title: Text('Inicio'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/home');
+            },
+          ),
+
           ListTile(
             leading: Icon(Icons.account_circle),
             title: Text('Perfil'),

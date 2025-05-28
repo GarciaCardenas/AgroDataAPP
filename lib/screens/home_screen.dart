@@ -34,11 +34,12 @@ class HomeScreen extends StatelessWidget {
               children: [
                 ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/cultivo');
+                    Navigator.pushNamed(context, '/productos');
                   },
-                  icon: Icon(Icons.camera_alt),
-                  label: Text("Escanear planta"),
+                  icon: Icon(Icons.shopping_cart),
+                  label: Text("Ver productos"),
                 ),
+
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pushNamed(context, '/comunidad');

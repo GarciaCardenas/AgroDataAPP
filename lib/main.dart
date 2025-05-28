@@ -12,7 +12,9 @@ import 'screens/ayuda_screen.dart';
 import 'screens/ajustes_screen.dart';
 import 'screens/nosotros_screen.dart';
 import 'screens/new_posts_creen.dart';
-
+import 'screens/productos_screen.dart';
+import 'screens/calcular_produccion_screen.dart';
+import 'screens/detectar_enfermedad_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -45,6 +47,10 @@ class MyApp extends StatelessWidget {
         '/ajustes': (context) => AjustesScreen(),
         '/nosotros': (context) => NosotrosScreen(),
         '/new_post': (context) => NewPostScreen(),
+        '/productos': (context) => ProductosScreen(),
+        '/calcularProduccion': (context) => CalcularProduccionScreen(),
+        '/detectarEnfermedad': (context) => DetectarEnfermedadScreen(),
+
       },
       // 👇 rutas que requieren argumentos (por ejemplo, cropType en /camera)
       onGenerateRoute: (settings) {
