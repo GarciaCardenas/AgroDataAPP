@@ -17,8 +17,13 @@ class DetectarEnfermedadScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const Text("Selecciona el cultivo a analizar", style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              "Selecciona el cultivo a analizar",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 20),
+
+            // 🥔 Cultivo Papa
             InkWell(
               onTap: () {
                 Navigator.push(
@@ -35,13 +40,43 @@ class DetectarEnfermedadScreen extends StatelessWidget {
                     backgroundImage: AssetImage('assets/images/papa.jpg'),
                   ),
                   SizedBox(height: 8),
-                  Text("Papa", style: TextStyle(fontSize: 16)),
+                  Text("Tizón de Papa", style: TextStyle(fontSize: 16)),
                 ],
               ),
             ),
+
+            const SizedBox(height: 30),
+
+            // 🌽 Otro cultivo
+            InkWell(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/photo',
+                  arguments: {
+                    'cropType': 'otro',
+                    'mode': 'photo',
+                  },
+                );
+              },
+              child: Column(
+                children: const [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage: AssetImage('assets/images/otro_cultivo.jpg'),
+                  ),
+                  SizedBox(height: 8),
+                  Text("Otro cultivo", style: TextStyle(fontSize: 16)),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 40),
+
             const Text("¿Necesitas ayuda?", style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
+
+            // 🤝 Comunidad
             InkWell(
               onTap: () {
                 Navigator.pushNamed(context, '/comunidad');

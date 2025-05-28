@@ -15,6 +15,10 @@ import 'screens/new_posts_creen.dart';
 import 'screens/productos_screen.dart';
 import 'screens/calcular_produccion_screen.dart';
 import 'screens/detectar_enfermedad_screen.dart';
+import 'screens/photo_screen.dart';
+import 'screens/confirm_screen.dart';
+import 'screens/result_screen.dart';
+import 'screens/identification_result.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,7 +37,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       initialRoute: '/login',
-      // 👇 rutas que NO requieren argumentos
+      // Rutas que NO requieren argumentos
       routes: {
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
@@ -50,26 +54,37 @@ class MyApp extends StatelessWidget {
         '/productos': (context) => ProductosScreen(),
         '/calcularProduccion': (context) => CalcularProduccionScreen(),
         '/detectarEnfermedad': (context) => DetectarEnfermedadScreen(),
-
+        // Rutas Crop Health
+        '/photo': (context) => PhotoScreen(),
       },
-      // 👇 rutas que requieren argumentos (por ejemplo, cropType en /camera)
+      // Rutas que requieren argumentos
       onGenerateRoute: (settings) {
-        if (settings.name == '/camera') {
-          final args = settings.arguments as Map<String, String>;
+        switch (settings.name) {
+          case '/camera':
+            final args = settings.arguments as Map<String, String>;
+            return MaterialPageRoute(
+              builder: (context) => CameraScreen(
+                cropType: args['cropType']!,
+                mode: args['mode']!,
+              ),
+            );
 
-          final cropType = args['cropType']!;
-          final mode = args['mode']!;
+          case '/confirm':
+            final base64Image = settings.arguments as String;
+            return MaterialPageRoute(
+              builder: (context) => ConfirmScreen(base64Image: base64Image),
+            );
 
-          return MaterialPageRoute(
-            builder: (context) => CameraScreen(
-              cropType: cropType,
-              mode: mode,
-            ),
-          );
+          case '/result_api':
+            final result = settings.arguments as IdentificationResult;
+            return MaterialPageRoute(
+              builder: (context) => ResultScreen(result: result),
+            );
+
+          default:
+            return null;
         }
-        return null;
       },
-
     );
   }
 }
