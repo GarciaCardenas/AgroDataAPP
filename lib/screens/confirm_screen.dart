@@ -17,22 +17,38 @@ class ConfirmScreen extends StatelessWidget {
           children: [
             Expanded(
               child: Image.memory(
-                // decode for preview
-                base64Decode(base64Image),
+                base64Decode(base64Image), // Para previsualizar la imagen
                 fit: BoxFit.contain,
               ),
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              child: Text('Enviar a Crop.health'),
+              child: Text('Enviar'),
               onPressed: () async {
-                final result = await ApiService.identifyCrop([base64Image]);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ResultScreen(result: result),
-                  ),
-                );
+                try {
+                  final result = await ApiService.identifyCrop([base64Image]);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ResultScreen(result: result),
+                    ),
+                  );
+                } catch (e) {
+                  // Mostrar error en un diálogo
+                  showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: Text('Error'),
+                      content: Text('Ocurrió un error:\n$e'),
+                      actions: [
+                        TextButton(
+                          child: Text('OK'),
+                          onPressed: () => Navigator.pop(context),
+                        )
+                      ],
+                    ),
+                  );
+                }
               },
             ),
           ],
