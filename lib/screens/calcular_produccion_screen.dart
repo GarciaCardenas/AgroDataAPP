@@ -24,7 +24,7 @@ class CalcularProduccionScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => CameraScreen(cropType: "naranja", mode: "video"),
+                    builder: (_) => CameraScreen(cropType: "naranja", mode: "photo"),
                   ),
                 );
               },
