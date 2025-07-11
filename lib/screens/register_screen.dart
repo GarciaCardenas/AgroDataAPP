@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'database_helper.dart';
 
 class RegisterScreen extends StatelessWidget {
@@ -10,55 +11,97 @@ class RegisterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Registro"), backgroundColor: Colors.green),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(30),
-        child: Column(
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(labelText: "Nombre completo", border: OutlineInputBorder()),
-            ),
-            SizedBox(height: 15),
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(labelText: "Correo electrónico", border: OutlineInputBorder()),
-            ),
-            SizedBox(height: 15),
-            TextField(
-              controller: userController,
-              decoration: InputDecoration(labelText: "Nombre de usuario", border: OutlineInputBorder()),
-            ),
-            SizedBox(height: 15),
-            TextField(
-              controller: passController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: "Contraseña", border: OutlineInputBorder()),
-            ),
-            SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () async {
-                final db = DatabaseHelper.instance;
-                await db.insertarUsuario({
-                  'nombre': nameController.text,
-                  'email': emailController.text,
-                  'usuario': userController.text,
-                  'contrasena': passController.text,
-                });
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Usuario registrado exitosamente")),
-                );
-                Navigator.pop(context);
-              },
-              child: Text("Registrarse"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: const Text("Registro"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Transform.rotate(
+              angle: 3.1416,
+              child: Image.asset(
+                'assets/images/inicio.png',
+                fit: BoxFit.cover,
+                color: Colors.black.withOpacity(0.55),
+                colorBlendMode: BlendMode.darken,
               ),
             ),
-          ],
-        ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextField(
+                    controller: userController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.8), // Transparencia
+                      labelText: "Nombre de usuario",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: passController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.9), // Transparencia
+                      labelText: "Contraseña",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final db = DatabaseHelper.instance;
+
+                      await db.insertarUsuario({
+                        'nombre': userController.text,                      // Usa el mismo valor que el usuario
+                        'email': '${userController.text}@correo.com',       // Correo ficticio automático
+                        'usuario': userController.text,
+                        'contrasena': passController.text,
+                      });
+
+
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setString('savedUsername', userController.text);
+                      await prefs.setString('savedPassword', passController.text);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Usuario registrado exitosamente")),
+                      );
+                      Navigator.pushReplacementNamed(context, '/home');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    ),
+                    child: const Text(
+                      "Registrarse",
+                      style: TextStyle(color: Colors.black), // 🟢 Texto en negro
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/login');
+                    },
+                    child: const Text(
+                      "¿Ya tienes cuenta? Inicia sesión",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

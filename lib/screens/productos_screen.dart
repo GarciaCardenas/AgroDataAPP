@@ -14,8 +14,9 @@ class ProductosScreen extends StatelessWidget {
         padding: EdgeInsets.all(16),
         children: [
           ProductoCard(
-            nombre: 'Calcular producción',
-            descripcion: 'Estima la producción de tu cultivo.',
+            nombre: 'Estimación de producción',
+            descripcion:
+            'Escanea tu cultivo con imágenes o video y obtén un cálculo aproximado de la cantidad de producción esperada.',
             imagen: 'assets/images/produccion.png',
             onTap: () {
               Navigator.pushNamed(context, '/calcularProduccion');
@@ -23,8 +24,9 @@ class ProductosScreen extends StatelessWidget {
           ),
           SizedBox(height: 16),
           ProductoCard(
-            nombre: 'Detectar enfermedad',
-            descripcion: 'Diagnostica posibles enfermedades.',
+            nombre: 'Diagnóstico de enfermedades',
+            descripcion:
+            'Selecciona el cultivo y escanea la planta. La app identificará posibles enfermedades o problemas.',
             imagen: 'assets/images/enfermedad.png',
             onTap: () {
               Navigator.pushNamed(context, '/detectarEnfermedad');
@@ -54,45 +56,45 @@ class ProductoCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: Container(
-          height: 100, // aproximadamente 2.5 cm en pantalla móvil
-          padding: EdgeInsets.all(8),
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: EdgeInsets.all(12),
           child: Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
                 child: Image.asset(
                   imagen,
-                  width: 80,
-                  height: 80,
+                  width: 90,
+                  height: 90,
                   fit: BoxFit.cover,
                 ),
               ),
-              SizedBox(width: 12),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       nombre,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      descripcion,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
                     ),
                     SizedBox(height: 6),
-                    Row(
-                      children: List.generate(5, (index) {
-                        return Icon(Icons.star_border, size: 16, color: Colors.blue);
-                      }),
-                    )
+                    Text(
+                      descripcion,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[800],
+                      ),
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
@@ -100,6 +102,7 @@ class ProductoCard extends StatelessWidget {
           ),
         ),
       ),
+
     );
   }
 }

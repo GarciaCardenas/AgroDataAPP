@@ -26,29 +26,28 @@ class _CameraScreenState extends State<CameraScreen> {
   String? _apiResponse;
   bool _isLoading = false;
 
-  //Variables para dibujar el cuadro de detección de frutos.
-  List<List<double>> _boxes  = [];
-  List<double>       _scores = [];
+  List<List<double>> _boxes = [];
+  List<double> _scores = [];
   int _imgW = 1, _imgH = 1;
 
-  Future<void> _getFile() async {
+  Future<void> _pickFile(ImageSource source) async {
     XFile? pickedFile;
 
     if (widget.mode == "photo") {
-      pickedFile = await picker.pickImage(source: ImageSource.camera);
-    } else if (widget.mode == "video") {
-      pickedFile = await picker.pickVideo(source: ImageSource.camera);
+      pickedFile = await picker.pickImage(source: source);
+    } else {
+      pickedFile = await picker.pickVideo(source: source);
     }
 
     if (pickedFile != null) {
-      //Para obtener el alto y ancho de la imagen
       _file = File(pickedFile.path);
-      final decoded = await decodeImageFromList(await _file!.readAsBytes());
-      _imgW = decoded.width;
-      _imgH = decoded.height;
+      if (widget.mode == "photo") {
+        final decoded = await decodeImageFromList(await _file!.readAsBytes());
+        _imgW = decoded.width;
+        _imgH = decoded.height;
+      }
 
       setState(() {
-        _file = File(pickedFile!.path);
         _isLoading = true;
       });
 
@@ -58,7 +57,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _sendToAPI(File file) async {
     final bytes = await file.readAsBytes();
-    final b64   = base64Encode(bytes);
+    final b64 = base64Encode(bytes);
 
     final uri = Uri.parse(
       widget.cropType == "naranja"
@@ -69,21 +68,27 @@ class _CameraScreenState extends State<CameraScreen> {
     try {
       String responseBody = '';
       if (widget.cropType == "naranja") {
-         final resp = await http.post(
-           uri,
-           headers: {'Content-Type': 'application/json'},
-           body: jsonEncode({'image': b64}),
-         )
-         .timeout(const Duration(seconds: 30));
+        final resp = await http
+            .post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'image': b64}),
+        )
+            .timeout(const Duration(seconds: 30));
 
-         final data  = jsonDecode(resp.body) as Map<String, dynamic>;
-         _boxes  = (data['boxes']  as List).map<List<double>>((b) => (b as List).map((v) => v.toDouble()).toList().cast<double>()).toList();
-         _scores = (data['scores'] as List).map<double>((s) => s.toDouble()).toList();
-         final int n = (data['boxes'] as List).length;
-         responseBody = 'Número de frutos detectados: $n';
-      }
-
-      else {
+        final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        _boxes = (data['boxes'] as List)
+            .map<List<double>>((b) => (b as List)
+            .map((v) => v.toDouble())
+            .toList()
+            .cast<double>())
+            .toList();
+        _scores = (data['scores'] as List)
+            .map<double>((s) => s.toDouble())
+            .toList();
+        final int n = (data['boxes'] as List).length;
+        responseBody = 'Número de frutos detectados: $n';
+      } else {
         final request = http.MultipartRequest('POST', uri)
           ..files.add(await http.MultipartFile.fromPath(
             widget.mode == "photo" ? 'image' : 'video',
@@ -98,20 +103,22 @@ class _CameraScreenState extends State<CameraScreen> {
         _apiResponse = responseBody;
         _isLoading = false;
       });
-
     } catch (e) {
       setState(() {
         _apiResponse = 'Error: $e';
-        _isLoading   = false;
+        _isLoading = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final esFoto = widget.mode == "photo";
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.cropType == "naranja" ? 'Calcular producción' : 'Detectar enfermedad'),
+        title: Text(widget.cropType == "naranja"
+            ? 'Calcular producción'
+            : 'Detectar enfermedad'),
       ),
       body: Column(
         children: [
@@ -120,25 +127,35 @@ class _CameraScreenState extends State<CameraScreen> {
               child: _isLoading
                   ? const CircularProgressIndicator()
                   : _file == null
-                  ? Text("Aún no has tomado una ${widget.mode == "photo" ? 'foto' : 'video'}")
+                  ? Text("Aún no has tomado ni seleccionado una ${esFoto ? 'foto' : 'video'}")
                   : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  widget.mode == "photo"
+                  esFoto
                       ? Image.file(_file!)
                       : const Icon(Icons.videocam, size: 100),
                   const SizedBox(height: 10),
                   Text(_apiResponse ?? ''),
                 ],
               ),
-
             ),
           ),
-          ElevatedButton.icon(
-            onPressed: _getFile,
-            icon: Icon(widget.mode == "photo" ? Icons.camera_alt : Icons.videocam),
-            label: Text(widget.mode == "photo" ? "Tomar Foto" : "Grabar Video"),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () => _pickFile(ImageSource.camera),
+                icon: Icon(esFoto ? Icons.camera_alt : Icons.videocam),
+                label: Text(esFoto ? "Tomar Foto" : "Grabar Video"),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => _pickFile(ImageSource.gallery),
+                icon: const Icon(Icons.photo_library),
+                label: Text(esFoto ? "Seleccionar Foto" : "Seleccionar Video"),
+              ),
+            ],
           ),
+          const SizedBox(height: 16),
         ],
       ),
     );

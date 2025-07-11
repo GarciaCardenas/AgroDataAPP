@@ -19,13 +19,24 @@ import 'screens/photo_screen.dart';
 import 'screens/confirm_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/identification_result.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+
+  final tieneUsuarioGuardado = prefs.getString('savedUsername') != null;
+
+  runApp(MyApp(
+    initialRoute: tieneUsuarioGuardado ? '/login' : '/register',
+  ));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String initialRoute;
+
+  const MyApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +47,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      initialRoute: '/login',
-      // Rutas que NO requieren argumentos
+      initialRoute: initialRoute,
       routes: {
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
@@ -54,10 +64,8 @@ class MyApp extends StatelessWidget {
         '/productos': (context) => ProductosScreen(),
         '/calcularProduccion': (context) => CalcularProduccionScreen(),
         '/detectarEnfermedad': (context) => DetectarEnfermedadScreen(),
-        // Rutas Crop Health
         '/photo': (context) => PhotoScreen(),
       },
-      // Rutas que requieren argumentos
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/camera':
@@ -68,19 +76,16 @@ class MyApp extends StatelessWidget {
                 mode: args['mode']!,
               ),
             );
-
           case '/confirm':
             final base64Image = settings.arguments as String;
             return MaterialPageRoute(
               builder: (context) => ConfirmScreen(base64Image: base64Image),
             );
-
           case '/result_api':
             final result = settings.arguments as IdentificationResult;
             return MaterialPageRoute(
               builder: (context) => ResultScreen(result: result),
             );
-
           default:
             return null;
         }
