@@ -19,6 +19,7 @@ import 'screens/photo_screen.dart';
 import 'screens/confirm_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/identification_result.dart';
+import 'screens/form_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -65,6 +66,7 @@ class MyApp extends StatelessWidget {
         '/calcularProduccion': (context) => CalcularProduccionScreen(),
         '/detectarEnfermedad': (context) => DetectarEnfermedadScreen(),
         '/photo': (context) => PhotoScreen(),
+        '/registro_cultivos': (context) => RegistroCultivosScreen(),
       },
       onGenerateRoute: (settings) {
         switch (settings.name) {
