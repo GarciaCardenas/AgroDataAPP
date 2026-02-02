@@ -355,6 +355,11 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                   },
                 ),
 
+                SizedBox(height: 16),
+
+                // Checkbox de términos y condiciones
+                _buildTermsCheckbox(),
+
                 SizedBox(height: 24),
 
                 // Botón de registro
@@ -450,6 +455,58 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTermsCheckbox() {
+    return Row(
+      children: [
+        SizedBox(
+          width: 24,
+          height: 24,
+          child: Checkbox(
+            value: _acceptTerms,
+            onChanged: (value) {
+              setState(() {
+                _acceptTerms = value ?? false;
+              });
+            },
+            activeColor: Color(0xFF2E7D32),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _acceptTerms = !_acceptTerms;
+              });
+            },
+            child: RichText(
+              text: TextSpan(
+                text: "Acepto los ",
+                style: TextStyle(
+                  color: Colors.grey[700],
+                  fontSize: 13,
+                ),
+                children: [
+                  TextSpan(
+                    text: "términos y condiciones",
+                    style: TextStyle(
+                      color: Color(0xFF2E7D32),
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

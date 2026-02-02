@@ -54,6 +54,16 @@ class _CustomDrawerState extends State<CustomDrawer> {
           ),
 
           ListTile(
+            leading: Icon(Icons.chat, color: Color(0xFF2E7D32)),
+            title: Text('Asistente IA'),
+            onTap: () {
+              Navigator.pushNamed(context, '/ai-assistant');
+            },
+          ),
+
+          Divider(),
+
+          ListTile(
             leading: Icon(Icons.account_circle),
             title: Text('Perfil'),
             onTap: () {

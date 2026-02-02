@@ -20,11 +20,14 @@ import 'screens/confirm_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/identification_result.dart';
 import 'screens/form_screen.dart';
+import 'screens/ai_assistant_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   final prefs = await SharedPreferences.getInstance();
 
   final tieneUsuarioGuardado = prefs.getString('savedUsername') != null;
@@ -67,6 +70,7 @@ class MyApp extends StatelessWidget {
         '/detectarEnfermedad': (context) => DetectarEnfermedadScreen(),
         '/photo': (context) => PhotoScreen(),
         '/registro_cultivos': (context) => RegistroCultivosScreen(),
+        '/ai-assistant': (context) => AiAssistantScreen(),
       },
       onGenerateRoute: (settings) {
         switch (settings.name) {
